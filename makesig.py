@@ -5,6 +5,8 @@
 #@menupath 
 #@toolbar 
 
+from __future__ import print_function
+
 import ghidra.program.model.lang.OperandType as OperandType
 import ghidra.program.model.lang.Register as Register
 
@@ -100,6 +102,6 @@ if __name__ == "__main__":
 		print(" ".join('{:02X}'.format(b) if b is not None else '?' for b in byte_pattern))
 		raise Exception("Could not find unique signature")
 	else:
-		print("Signature for " + fn.getName())
-		print(" ".join('{:02X}'.format(b) if b is not None else '?' for b in byte_pattern))
+		print("Signature for", fn.getName())
+		print(*('{:02X}'.format(b) if b is not None else '?' for b in byte_pattern))
 		print("".join(r'\x{:02X}'.format(b) if b is not None else r'\x2A' for b in byte_pattern))
