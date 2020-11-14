@@ -10,12 +10,15 @@ from __future__ import print_function
 import ghidra.program.model.lang.OperandType as OperandType
 import ghidra.program.model.lang.Register as Register
 
-def uniqueSig(bs):
+def findUniqueSig(bs, start):
 	"""
-	Returns True if only one result containing the pattern was found.
+	Returns a tuple (is_unique, first_start_address) indicating whether a signature is unique.
 	"""
-	result = findBytes(None, bs, 2)
-	return len(result) == 1
+	next_start_address = None
+	result = findBytes(start, bs, 2)
+	if len(result):
+		next_start_address = result[0]
+	return len(result) == 1, next_start_address
 
 def dumpOperandInfo(ins, op):
 	t = hex(ins.getOperandType(op))
@@ -82,8 +85,10 @@ if __name__ == "__main__":
 	
 	found = False
 	
-	# TODO proper find end of function
-	# for i in range(0, 200):
+	# store the address of the first match, if any
+	# this provides a small speedup in certain cases by not searching the whole space
+	# TODO take advantage of the address list by testing for matches instead of scanning
+	start_address = None
 	while not found and fm.getFunctionContaining(ins.getAddress()) == fn:
 		for entry in getMaskedInstruction(ins):
 			if entry is None:
@@ -93,7 +98,8 @@ if __name__ == "__main__":
 				pattern += r'\x{:02x}'.format(entry)
 				byte_pattern.append(entry)
 		
-		if uniqueSig(pattern):
+		is_unique, start_address = findUniqueSig(pattern, start_address)
+		if is_unique:
 			found = True
 			break
 		ins = ins.getNext()
