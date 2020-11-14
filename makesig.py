@@ -7,8 +7,20 @@
 
 from __future__ import print_function
 
+import collections
 import ghidra.program.model.lang.OperandType as OperandType
 import ghidra.program.model.lang.Register as Register
+
+BytePattern = collections.namedtuple('BytePattern', ['is_wildcard', 'byte'])
+
+def __bytepattern_ida_str(self):
+	return '{:02X}'.format(self.byte) if not self.is_wildcard else '?'
+
+def __bytepattern_sig_str(self):
+	return r'\x{:02X}'.format(self.byte) if not self.is_wildcard else r'\x2A'
+
+BytePattern.ida_str = __bytepattern_ida_str
+BytePattern.sig_str = __bytepattern_sig_str
 
 def findUniqueSig(bs, start):
 	"""
@@ -59,9 +71,9 @@ def getMaskedInstruction(ins):
 	# TODO improve this logic
 	for m, b in zip(mask, ins.getBytes()):
 		if m == 0xFF:
-			yield None
+			yield BytePattern(is_wildcard = True, byte = None)
 		else:
-			yield b & 0xFF
+			yield BytePattern(byte = b & 0xFF, is_wildcard = False)
 
 if __name__ == "__main__":
 	fm = currentProgram.getFunctionManager()
@@ -81,7 +93,7 @@ if __name__ == "__main__":
 		raise Exception("Could not find entry point to function")
 
 	pattern = "" # contains pattern string (supports regular expressions)
-	byte_pattern = [] # contains integers 0x00 to 0xFF, or None if the byte was masked
+	byte_pattern = [] # contains BytePattern instances
 	
 	found = False
 	
@@ -91,12 +103,11 @@ if __name__ == "__main__":
 	start_address = None
 	while not found and fm.getFunctionContaining(ins.getAddress()) == fn:
 		for entry in getMaskedInstruction(ins):
-			if entry is None:
+			byte_pattern.append(entry)
+			if entry.is_wildcard:
 				pattern += '.'
-				byte_pattern.append(None)
 			else:
-				pattern += r'\x{:02x}'.format(entry)
-				byte_pattern.append(entry)
+				pattern += r'\x{:02x}'.format(entry.byte)
 		
 		is_unique, start_address = findUniqueSig(pattern, start_address)
 		if is_unique:
@@ -105,9 +116,9 @@ if __name__ == "__main__":
 		ins = ins.getNext()
 	
 	if not found:
-		print(" ".join('{:02X}'.format(b) if b is not None else '?' for b in byte_pattern))
+		print(*(b.ida_str() for b in byte_pattern))
 		raise Exception("Could not find unique signature")
 	else:
 		print("Signature for", fn.getName())
-		print(*('{:02X}'.format(b) if b is not None else '?' for b in byte_pattern))
-		print("".join(r'\x{:02X}'.format(b) if b is not None else r'\x2A' for b in byte_pattern))
+		print(*(b.ida_str() for b in byte_pattern))
+		print("".join(b.sig_str() for b in byte_pattern))
