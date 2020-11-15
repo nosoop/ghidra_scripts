@@ -10,6 +10,7 @@ from __future__ import print_function
 import collections
 import ghidra.program.model.lang.OperandType as OperandType
 import ghidra.program.model.lang.Register as Register
+import ghidra.program.model.address.AddressSet as AddressSet
 
 BytePattern = collections.namedtuple('BytePattern', ['is_wildcard', 'byte'])
 
@@ -21,16 +22,6 @@ def __bytepattern_sig_str(self):
 
 BytePattern.ida_str = __bytepattern_ida_str
 BytePattern.sig_str = __bytepattern_sig_str
-
-def findUniqueSig(bs, start):
-	"""
-	Returns a tuple (is_unique, first_start_address) indicating whether a signature is unique.
-	"""
-	next_start_address = None
-	result = findBytes(start, bs, 2)
-	if len(result):
-		next_start_address = result[0]
-	return len(result) == 1, next_start_address
 
 def dumpOperandInfo(ins, op):
 	t = hex(ins.getOperandType(op))
@@ -68,9 +59,9 @@ def getMaskedInstruction(ins):
 			mask = [ m | v & 0xFF for m, v in zip(mask, proto.getOperandValueMask(op).getBytes()) ]
 	# print('  ' + str(mask))
 	
-	# TODO improve this logic
 	for m, b in zip(mask, ins.getBytes()):
 		if m == 0xFF:
+			# we only check for fully masked bytes at the moment
 			yield BytePattern(is_wildcard = True, byte = None)
 		else:
 			yield BytePattern(byte = b & 0xFF, is_wildcard = False)
@@ -97,10 +88,10 @@ if __name__ == "__main__":
 	
 	found = False
 	
-	# store the address of the first match, if any
-	# this provides a small speedup in certain cases by not searching the whole space
-	# TODO take advantage of the address list by testing for matches instead of scanning
-	start_address = None
+	# keep track of our matches
+	matches = []
+	match_limit = 128
+	
 	while not found and fm.getFunctionContaining(ins.getAddress()) == fn:
 		for entry in getMaskedInstruction(ins):
 			byte_pattern.append(entry)
@@ -108,12 +99,21 @@ if __name__ == "__main__":
 				pattern += '.'
 			else:
 				pattern += r'\x{:02x}'.format(entry.byte)
-		
-		is_unique, start_address = findUniqueSig(pattern, start_address)
-		if is_unique:
-			found = True
-			break
 		ins = ins.getNext()
+		
+		if matches and 0 < len(matches) < match_limit:
+			# we have all the remaining matches, start only searching those addresses
+			match_set = AddressSet()
+			for addr in matches:
+				match_set.add(addr, addr.add(len(byte_pattern)))
+			matches = findBytes(match_set, pattern, match_limit, 1)
+		else:
+			# the matches are sorted in ascending order, so the first match will be the start
+			matches = findBytes(matches[0] if len(matches) else None, pattern, match_limit)
+		
+		if len(matches) < 2:
+			found = len(matches) == 1
+			break
 	
 	if not found:
 		print(*(b.ida_str() for b in byte_pattern))
