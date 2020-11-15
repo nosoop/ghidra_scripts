@@ -93,13 +93,11 @@ if __name__ == "__main__":
 	pattern = "" # contains pattern string (supports regular expressions)
 	byte_pattern = [] # contains BytePattern instances
 	
-	found = False
-	
 	# keep track of our matches
 	matches = []
 	match_limit = 128
 	
-	while not found and fm.getFunctionContaining(ins.getAddress()) == fn:
+	while fm.getFunctionContaining(ins.getAddress()) == fn:
 		for entry in getMaskedInstruction(ins):
 			byte_pattern.append(entry)
 			if entry.is_wildcard:
@@ -108,7 +106,7 @@ if __name__ == "__main__":
 				pattern += r'\x{:02x}'.format(entry.byte)
 		ins = ins.getNext()
 		
-		if matches and 0 < len(matches) < match_limit:
+		if 0 < len(matches) < match_limit:
 			# we have all the remaining matches, start only searching those addresses
 			match_set = AddressSet()
 			for addr in matches:
@@ -119,11 +117,11 @@ if __name__ == "__main__":
 			matches = findBytes(matches[0] if len(matches) else None, pattern, match_limit)
 		
 		if len(matches) < 2:
-			found = len(matches) == 1
 			break
 	
-	if not found:
+	if not len(matches) == 1:
 		print(*(b.ida_str() for b in byte_pattern))
+		print('Signature matched', len(matches), 'locations')
 		raise Exception("Could not find unique signature")
 	else:
 		print("Signature for", fn.getName())
