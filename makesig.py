@@ -12,12 +12,19 @@ import ghidra.program.model.lang.OperandType as OperandType
 import ghidra.program.model.lang.Register as Register
 import ghidra.program.model.address.AddressSet as AddressSet
 
+MAKE_SIG_AT = collections.OrderedDict([
+	('fn', 'start of function'),
+	('cursor', 'instruction at cursor')
+])
+
 BytePattern = collections.namedtuple('BytePattern', ['is_wildcard', 'byte'])
 
 def __bytepattern_ida_str(self):
+	# return an IDA-style binary search string
 	return '{:02X}'.format(self.byte) if not self.is_wildcard else '?'
 
 def __bytepattern_sig_str(self):
+	# return a SourceMod-style byte signature
 	return r'\x{:02X}'.format(self.byte) if not self.is_wildcard else r'\x2A'
 
 BytePattern.ida_str = __bytepattern_ida_str
@@ -74,10 +81,10 @@ if __name__ == "__main__":
 
 	cm = currentProgram.getCodeManager()
 
-	start_at = askChoice("makesig", "Make sig at:", [ "start of function", "current instruction" ], "start of function")
-	if start_at == "start of function":
+	start_at = askChoice("makesig", "Make sig at:", MAKE_SIG_AT.values(), MAKE_SIG_AT['fn'])
+	if start_at == MAKE_SIG_AT['fn']:
 		ins = cm.getInstructionAt(fn.getEntryPoint())
-	elif start_at == "current instruction":
+	elif start_at == MAKE_SIG_AT['cursor']:
 		ins = cm.getInstructionContaining(currentAddress)
 	
 	if not ins:
