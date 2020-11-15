@@ -121,7 +121,7 @@ if __name__ == "__main__":
 	
 	if not len(matches) == 1:
 		print(*(b.ida_str() for b in byte_pattern))
-		print('Signature matched', len(matches), 'locations')
+		print('Signature matched', len(matches), 'locations:', *(matches))
 		raise Exception("Could not find unique signature")
 	else:
 		print("Signature for", fn.getName())
