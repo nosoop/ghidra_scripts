@@ -73,15 +73,11 @@ def getMaskedInstruction(ins):
 		else:
 			yield BytePattern(byte = b & 0xFF, is_wildcard = False)
 
-if __name__ == "__main__":
+def process(start_at = MAKE_SIG_AT['fn']):
 	fm = currentProgram.getFunctionManager()
 	fn = fm.getFunctionContaining(currentAddress)
-	if not fn:
-		raise Exception("Not in a function")
-
 	cm = currentProgram.getCodeManager()
 
-	start_at = askChoice("makesig", "Make sig at:", MAKE_SIG_AT.values(), MAKE_SIG_AT['fn'])
 	if start_at == MAKE_SIG_AT['fn']:
 		ins = cm.getInstructionAt(fn.getEntryPoint())
 	elif start_at == MAKE_SIG_AT['cursor']:
@@ -127,3 +123,12 @@ if __name__ == "__main__":
 		print("Signature for", fn.getName())
 		print(*(b.ida_str() for b in byte_pattern))
 		print("".join(b.sig_str() for b in byte_pattern))
+
+if __name__ == "__main__":
+	fm = currentProgram.getFunctionManager()
+	fn = fm.getFunctionContaining(currentAddress)
+	if not fn:
+		raise Exception("Not in a function")
+
+	start_at = askChoice("makesig", "Make sig at:", MAKE_SIG_AT.values(), MAKE_SIG_AT['fn'])
+	process(start_at)
