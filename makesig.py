@@ -100,7 +100,15 @@ def process(start_at = MAKE_SIG_AT['fn']):
 				pattern += '.'
 			else:
 				pattern += r'\x{:02x}'.format(entry.byte)
+		
+		expected_next = ins.getAddress().add(ins.length)
 		ins = ins.getNext()
+		
+		if ins.getAddress() != expected_next:
+			# we don't have a good way to deal with alignment bytes
+			# raise an exception for now
+			raise Exception("Instruction at %s is not adjacent"
+					" to previous (expected %s)" % (expected_next, ins.getAddress()))
 		
 		if 0 < len(matches) < match_limit:
 			# we have all the remaining matches, start only searching those addresses
