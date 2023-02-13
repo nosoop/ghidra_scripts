@@ -105,10 +105,9 @@ def process(start_at = MAKE_SIG_AT['fn']):
 		ins = ins.getNext()
 		
 		if ins.getAddress() != expected_next:
-			# we don't have a good way to deal with alignment bytes
-			# raise an exception for now
-			raise Exception("Instruction at %s is not adjacent"
+			printerr("Instruction at %s is not adjacent"
 					" to previous (expected %s)" % (expected_next, ins.getAddress()))
+			break
 		
 		if 0 < len(matches) < match_limit:
 			# we have all the remaining matches, start only searching those addresses
@@ -126,7 +125,7 @@ def process(start_at = MAKE_SIG_AT['fn']):
 	if not len(matches) == 1:
 		print(*(b.ida_str() for b in byte_pattern))
 		print('Signature matched', len(matches), 'locations:', *(matches))
-		raise Exception("Could not find unique signature")
+		printerr("Could not find unique signature")
 	else:
 		print("Signature for", fn.getName())
 		print(*(b.ida_str() for b in byte_pattern))
@@ -136,7 +135,7 @@ if __name__ == "__main__":
 	fm = currentProgram.getFunctionManager()
 	fn = fm.getFunctionContaining(currentAddress)
 	if not fn:
-		raise Exception("Not in a function")
+		printerr("Not in a function")
 
 	start_at = askChoice("makesig", "Make sig at:", MAKE_SIG_AT.values(), MAKE_SIG_AT['fn'])
 	process(start_at)
