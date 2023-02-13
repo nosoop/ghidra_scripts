@@ -78,8 +78,7 @@ def cleanupWilds(byte_pattern):
 	for byte in reversed(byte_pattern):
 		if byte.is_wildcard is False:
 			break
-		else:
-			del byte_pattern[-1]
+		del byte_pattern[-1]
 
 def process(start_at = MAKE_SIG_AT['fn']):
 	fm = currentProgram.getFunctionManager()
