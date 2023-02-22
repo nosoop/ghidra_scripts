@@ -73,6 +73,13 @@ def getMaskedInstruction(ins):
 		else:
 			yield BytePattern(byte = b & 0xFF, is_wildcard = False)
 
+# removes trailing wilds from the sig
+def cleanupWilds(byte_pattern):
+	for byte in reversed(byte_pattern):
+		if byte.is_wildcard is False:
+			break
+		del byte_pattern[-1]
+
 def process(start_at = MAKE_SIG_AT['fn']):
 	fm = currentProgram.getFunctionManager()
 	fn = fm.getFunctionContaining(currentAddress)
@@ -128,6 +135,7 @@ def process(start_at = MAKE_SIG_AT['fn']):
 		print('Signature matched', len(matches), 'locations:', *(matches))
 		printerr("Could not find unique signature")
 	else:
+		cleanupWilds(byte_pattern)
 		print("Signature for", fn.getName())
 		print(*(b.ida_str() for b in byte_pattern))
 		print("".join(b.sig_str() for b in byte_pattern))
