@@ -145,6 +145,6 @@ if __name__ == "__main__":
 	fn = fm.getFunctionContaining(currentAddress)
 	if not fn:
 		printerr("Not in a function")
-        else:
-	        start_at = askChoice("makesig", "Make sig at:", MAKE_SIG_AT.values(), MAKE_SIG_AT['fn'])
-	        process(start_at)
+	else:
+		start_at = askChoice("makesig", "Make sig at:", MAKE_SIG_AT.values(), MAKE_SIG_AT['fn'])
+		process(start_at)
