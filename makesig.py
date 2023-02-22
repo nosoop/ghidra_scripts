@@ -105,9 +105,10 @@ def process(start_at = MAKE_SIG_AT['fn']):
 		ins = ins.getNext()
 		
 		if ins.getAddress() != expected_next:
-			printerr("Instruction at %s is not adjacent"
-					" to previous (expected %s)" % (expected_next, ins.getAddress()))
-			break
+			# add wildcards until we get to the next instruction
+			for _ in range(ins.getAddress().subtract(expected_next)):
+				byte_pattern.append(BytePattern(is_wildcard = True, byte = None))
+				pattern += '.'
 		
 		if 0 < len(matches) < match_limit:
 			# we have all the remaining matches, start only searching those addresses
