@@ -80,7 +80,7 @@ def cleanupWilds(byte_pattern):
 			break
 		del byte_pattern[-1]
 
-def process(start_at = MAKE_SIG_AT['fn']):
+def process(start_at = MAKE_SIG_AT['fn'], min_length = 1):
 	fm = currentProgram.getFunctionManager()
 	fn = fm.getFunctionContaining(currentAddress)
 	cm = currentProgram.getCodeManager()
@@ -117,6 +117,9 @@ def process(start_at = MAKE_SIG_AT['fn']):
 				byte_pattern.append(BytePattern(is_wildcard = True, byte = None))
 				pattern += '.'
 		
+		if len(byte_pattern) < min_length:
+			continue
+		
 		if 0 < len(matches) < match_limit:
 			# we have all the remaining matches, start only searching those addresses
 			match_set = AddressSet()
@@ -147,4 +150,7 @@ if __name__ == "__main__":
 		printerr("Not in a function")
 	else:
 		start_at = askChoice("makesig", "Make sig at:", MAKE_SIG_AT.values(), MAKE_SIG_AT['fn'])
-		process(start_at)
+		
+		# we currently don't expose min_length
+		# TODO: rework askChoice to use a custom panel with all options
+		process(start_at, min_length = 1)
