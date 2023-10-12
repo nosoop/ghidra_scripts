@@ -88,7 +88,12 @@ def process(start_at = MAKE_SIG_AT['fn'], min_length = 1):
 	if start_at == MAKE_SIG_AT['fn']:
 		ins = cm.getInstructionAt(fn.getEntryPoint())
 	elif start_at == MAKE_SIG_AT['cursor']:
-		ins = cm.getInstructionContaining(currentAddress)
+		try:
+			# Ghidra 10.4 introduces an additional parameter 'usePrototypeLength'
+			# it will throw on older versions, so fall back to the previous version
+			ins = cm.getInstructionContaining(currentAddress, False)
+		except TypeError:
+			ins = cm.getInstructionContaining(currentAddress)
 	
 	if not ins:
 		raise Exception("Could not find entry point to function")
