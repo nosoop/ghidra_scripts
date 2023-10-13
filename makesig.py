@@ -45,7 +45,7 @@ def shouldMaskOperand(ins, opIndex):
 	optype = ins.getOperandType(opIndex)
 	# if any(reg.getName() == "EBP" for reg in filter(lambda op: isinstance(op, Register), ins.getOpObjects(opIndex))):
 		# return False
-	return optype & OperandType.DYNAMIC or optype & OperandType.ADDRESS
+	return optype & (OperandType.ADDRESS or OperandType.DATA) or optype & (OperandType.ADDRESS or OperandType.SCALAR)
 
 def getMaskedInstruction(ins):
 	"""
